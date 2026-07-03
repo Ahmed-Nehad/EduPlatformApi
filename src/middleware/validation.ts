@@ -91,7 +91,13 @@ export const validate = (schema: WrappedSchema) => {
       }
       if (shape.query) {
         const parsed = shape.query.parse(req.query)
-        ;(req as Request).query = parsed as Record<string, unknown> as Request['query']
+        // Express 5 defines `req.query` as a getter-only property, so a direct
+        // assignment throws. Redefine it as a writable own property instead.
+        Object.defineProperty(req, 'query', {
+          value: parsed,
+          writable: true,
+          configurable: true,
+        })
       }
       next()
     } catch (error) {
