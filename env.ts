@@ -29,7 +29,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().positive().default(3000),
   HOST: z.string().default('localhost'),
   
-  BCRYPT_ROUNDS: z.coerce.number().min(10).max(20).default(12),
+  BCRYPT_ROUNDS: z.coerce.number().min(4).max(20).default(12),
 
   // Rate limiting (backed by Redis via ioredis)
   RATE_LIMIT_WINDOW_MS: z.coerce.number().positive().default(15 * 60 * 1000), // 15 min

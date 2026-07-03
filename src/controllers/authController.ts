@@ -49,14 +49,24 @@ const toSessionUser = (
  */
 const findUserByEmail = async (
   email: string
-): Promise<{ user: SessionUser; passwordHash: string } | null> => {
+): Promise<{
+  user: SessionUser
+  passwordHash: string
+  isActive: boolean | null
+  emailVerifiedAt: Date | null
+} | null> => {
   const [student] = await db
     .select()
     .from(students)
     .where(eq(students.email, email))
     .limit(1)
   if (student) {
-    return { user: toSessionUser(student, 'student'), passwordHash: student.passwordHash }
+    return {
+      user: toSessionUser(student, 'student'),
+      passwordHash: student.passwordHash,
+      isActive: student.isActive,
+      emailVerifiedAt: student.emailVerifiedAt,
+    }
   }
 
   const [teacher] = await db
@@ -65,7 +75,12 @@ const findUserByEmail = async (
     .where(eq(teachers.email, email))
     .limit(1)
   if (teacher) {
-    return { user: toSessionUser(teacher, 'teacher'), passwordHash: teacher.passwordHash }
+    return {
+      user: toSessionUser(teacher, 'teacher'),
+      passwordHash: teacher.passwordHash,
+      isActive: teacher.isActive,
+      emailVerifiedAt: null,
+    }
   }
 
   const [admin] = await db
@@ -74,7 +89,12 @@ const findUserByEmail = async (
     .where(eq(admins.email, email))
     .limit(1)
   if (admin) {
-    return { user: toSessionUser(admin, 'admin'), passwordHash: admin.passwordHash }
+    return {
+      user: toSessionUser(admin, 'admin'),
+      passwordHash: admin.passwordHash,
+      isActive: null,
+      emailVerifiedAt: null,
+    }
   }
 
   return null
@@ -195,7 +215,9 @@ export const register = async (req: AuthenticatedRequest, res: Response) => {
     })
 
     const verifyUrl = `${env.APP_BASE_URL}/verify-email?token=${token}`
-    await sendEmailVerificationEmail(created.email, verifyUrl)
+    sendEmailVerificationEmail(created.email, verifyUrl).catch((err) => {
+      console.error('[register] failed to send verification email', err)
+    })
   } catch (err) {
     console.error('[register] failed to send verification email', err)
   }
@@ -214,45 +236,27 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
 
   const found = await findUserByEmail(email)
   if (!found) {
-    // Use a generic message to avoid user enumeration.
     throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid email or password')
   }
 
-  const { user, passwordHash } = found
+  const { user, passwordHash, isActive, emailVerifiedAt } = found
 
   const valid = await comparePassword(password, passwordHash)
   if (!valid) {
     throw AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid email or password')
   }
 
-  // Active-account gate for roles that support deactivation.
-  if (user.role === 'student' || user.role === 'teacher') {
-    const table = user.role === 'student' ? students : teachers
-    const [row] = await db
-      .select({ isActive: table.isActive })
-      .from(table)
-      .where(eq(table.id, user.id))
-      .limit(1)
-    if (row && !row.isActive) {
-      throw AppError.forbidden('ACCOUNT_DISABLED', 'This account has been disabled')
-    }
+  // Active-account gate (students & teachers only)
+  if (isActive === false) {
+    throw AppError.forbidden('ACCOUNT_DISABLED', 'This account has been disabled')
   }
 
-  // Hard gate: students must verify their email before they can use the app.
-  // No session is created until the address is confirmed, so unverified
-  // accounts cannot reach any authenticated endpoint.
-  if (user.role === 'student') {
-    const [row] = await db
-      .select({ emailVerifiedAt: students.emailVerifiedAt })
-      .from(students)
-      .where(eq(students.id, user.id))
-      .limit(1)
-    if (row && !row.emailVerifiedAt) {
-      throw AppError.forbidden(
-        'EMAIL_NOT_VERIFIED',
-        'Please verify your email address before logging in'
-      )
-    }
+  // Email verification gate (students only)
+  if (user.role === 'student' && !emailVerifiedAt) {
+    throw AppError.forbidden(
+      'EMAIL_NOT_VERIFIED',
+      'Please verify your email address before logging in'
+    )
   }
 
   // Device binding is only enforced for students.
@@ -268,7 +272,6 @@ export const login = async (req: AuthenticatedRequest, res: Response) => {
   }
 
   const { sessionId, session } = await createSession(user, deviceId)
-
   res.cookie(SESSION_COOKIE_NAME, sessionId, sessionCookieOptions())
 
   res.status(200).json({
@@ -326,7 +329,9 @@ export const passwordResetRequest = async (
     })
 
     const resetUrl = `${env.APP_BASE_URL}/reset-password?token=${token}`
-    await sendPasswordResetEmail(student.email, resetUrl)
+    sendPasswordResetEmail(student.email, resetUrl).catch((err) => {
+      console.error('[password reset request] failed to send reset password email', err)
+    })
   }
 
   res.status(200).json({
