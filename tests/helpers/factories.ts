@@ -1,5 +1,5 @@
 import { db } from '../../src/db/connection.ts'
-import { students, teachers, admins } from '../../src/db/schema.ts'
+import { students, teachers, admins, teacherAccessRequests } from '../../src/db/schema.ts'
 import { hashPassword } from '../../src/utils/passowrd.ts'
 
 export interface TestUser {
@@ -86,3 +86,30 @@ export async function createAdmin(
 /** A valid device fingerprint string in the `sha256:<hex>` format. */
 export const fingerprint = (seed: string) =>
   `sha256:${seed.padEnd(8, '0').slice(0, 64)}`
+
+
+/**
+ * Creates a teacher access request row in the database (for test purposes).
+ * Returns the inserted row.
+ */
+export async function createTeacherAccessRequest(
+  args: {
+    studentId: string
+    teacherId: string
+    status?: 'pending' | 'approved' | 'rejected'
+    requestedAt?: Date
+    decidedAt?: Date | null
+  }
+) {
+  const result = await db
+    .insert(teacherAccessRequests)
+    .values({
+      studentId: args.studentId,
+      teacherId: args.teacherId,
+      status: args.status ?? 'pending',
+      requestedAt: args.requestedAt ?? new Date(),
+      decidedAt: args.decidedAt ?? null,
+    })
+    .returning()
+  return result[0]
+}

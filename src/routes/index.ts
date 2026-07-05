@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import authRoutes from './v1/authRoutes.ts'
 import adminRoutes from './v1/adminRoutes.ts'
+import teacherRoutes from './v1/teacherRoutes.ts'
 
 /**
  * Central route registry.
@@ -14,8 +15,8 @@ const router = Router()
 const v1 = Router()
 v1.use('/auth', authRoutes)
 v1.use('/admin', adminRoutes)
+v1.use('/teacher', teacherRoutes)
 // v1.use('/students', studentRoutes)
-// v1.use('/teachers', teacherRoutes)
 
 router.use('/v1', v1)
 
