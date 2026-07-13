@@ -4,28 +4,32 @@ import { redis } from '../../src/db/redis.ts'
 import { execSync } from 'child_process'
 
 
+// Snake-case identifiers matching the actual table names defined in
+// src/db/schema.ts (pgTable('...', ...)). Ordered so dependents (child
+// tables) are dropped before their parents; CASCADE is still applied as a
+// backstop for any ordering gaps.
 export const tableNames = [
-  "admins",
-  "teachers",
-  "students",
-  "passwordResetTokens",
-  "emailVerificationTokens",
-  "studentDevices",
-  "teacherAccessRequests",
-  "walletTransactions",
-  "redemptionCodes",
-  "codeRedemptions",
-  "payments",
-  "lectures",
-  "videos",
-  "files",
-  "lectureContentItems",
-  "lecturePurchases",
-  "lectureViews",
+  "quiz_answers",
+  "quiz_questions",
+  "quiz_attempts",
   "quizzes",
-  "quizAttempts",
-  "quizQuestions",
-  "quizAnswers"
+  "lecture_views",
+  "lecture_purchases",
+  "lecture_content_items",
+  "files",
+  "videos",
+  "lectures",
+  "code_redemptions",
+  "redemption_codes",
+  "payments",
+  "wallet_transactions",
+  "teacher_access_requests",
+  "student_devices",
+  "email_verification_tokens",
+  "password_reset_tokens",
+  "students",
+  "teachers",
+  "admins",
 ];
 
 /**
