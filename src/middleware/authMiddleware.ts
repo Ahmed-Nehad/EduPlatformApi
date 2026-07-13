@@ -31,8 +31,9 @@ export const authenticate = async (
     req.user = session.user
     req.deviceId = session.deviceId
 
-    // Rolling expiration: refresh TTL on activity.
-    await touchSession(sessionId)
+    // Rolling expiration: refresh TTL on activity. Also refresh the user's
+    // session-index set so it does not expire before the sessions it tracks.
+    await touchSession(sessionId, session.user.id)
 
     next()
   } catch (err) {

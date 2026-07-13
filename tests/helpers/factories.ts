@@ -1,6 +1,6 @@
 import { db } from '../../src/db/connection.ts'
 import { students, teachers, admins, teacherAccessRequests } from '../../src/db/schema.ts'
-import { hashPassword } from '../../src/utils/passowrd.ts'
+import { hashPassword } from '../../src/utils/password.ts'
 
 export interface TestUser {
   id: string

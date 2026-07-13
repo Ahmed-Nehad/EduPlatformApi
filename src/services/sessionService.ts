@@ -56,9 +56,19 @@ export const getSession = async (
 /**
  * Refreshes the sliding TTL on an existing session (rolling expiration).
  * Called on every authenticated request via the middleware.
+ *
+ * Both the session key and the user's session-index set are refreshed so the
+ * index does not expire before the sessions it tracks (which would orphan
+ * sessions and break `destroyAllUserSessions`).
  */
-export const touchSession = async (sessionId: string): Promise<void> => {
+export const touchSession = async (
+  sessionId: string,
+  userId?: string
+): Promise<void> => {
   await redis.expire(key(sessionId), env.SESSION_TTL_SECONDS)
+  if (userId) {
+    await redis.expire(indexKey(userId), env.SESSION_TTL_SECONDS)
+  }
 }
 
 /** Destroys a single session (logout / device revocation). */

@@ -9,9 +9,9 @@ import {
   passwordResetTokens,
   emailVerificationTokens,
 } from '../db/schema.ts'
-import { hashPassword, comparePassword } from '../utils/passowrd.ts'
+import { hashPassword, comparePassword } from '../utils/password.ts'
 import { AppError } from '../utils/AppError.ts'
-import { generateTokenPair, hashToken, safeEqual } from '../utils/tokens.ts'
+import { generateTokenPair, hashToken } from '../utils/tokens.ts'
 import {
   createSession,
   destroySession,
@@ -200,27 +200,25 @@ export const register = async (req: AuthenticatedRequest, res: Response) => {
       role: sql<'student'>`'student'`.as('role'),
     })
 
-  // Issue a verification token and email the link. Failures here must not
-  // roll back the registration — the student can request a new link via
-  // /resend-verification. We log and continue.
-  try {
-    const { token, tokenHash } = generateTokenPair()
-    const expiresAt = new Date(
-      Date.now() + env.EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000
-    )
-    await db.insert(emailVerificationTokens).values({
-      studentId: created.id,
-      tokenHash,
-      expiresAt,
-    })
+  // Issue a verification token. A failure here is a real error (the student
+  // would be left with no way to verify), so we let it propagate to the
+  // global error handler rather than silently returning 201.
+  const { token, tokenHash } = generateTokenPair()
+  const expiresAt = new Date(
+    Date.now() + env.EMAIL_VERIFICATION_TTL_MINUTES * 60 * 1000
+  )
+  await db.insert(emailVerificationTokens).values({
+    studentId: created.id,
+    tokenHash,
+    expiresAt,
+  })
 
-    const verifyUrl = `${env.APP_BASE_URL}/verify-email?token=${token}`
-    sendEmailVerificationEmail(created.email, verifyUrl).catch((err) => {
-      console.error('[register] failed to send verification email', err)
-    })
-  } catch (err) {
+  // Email delivery is best-effort: the student can request a new link via
+  // /resend-verification, so a transport failure must not fail registration.
+  const verifyUrl = `${env.APP_BASE_URL}/verify-email?token=${token}`
+  sendEmailVerificationEmail(created.email, verifyUrl).catch((err) => {
     console.error('[register] failed to send verification email', err)
-  }
+  })
 
   res.status(201).json({
     success: true,
@@ -358,7 +356,6 @@ export const passwordReset = async (req: AuthenticatedRequest, res: Response) =>
   if (
     !resetRow ||
     resetRow.usedAt ||
-    !safeEqual(resetRow.tokenHash, tokenHash) ||
     new Date(resetRow.expiresAt) < new Date()
   ) {
     throw AppError.badRequest(
@@ -408,7 +405,6 @@ export const verifyEmail = async (req: AuthenticatedRequest, res: Response) => {
   if (
     !verifyRow ||
     verifyRow.usedAt ||
-    !safeEqual(verifyRow.tokenHash, tokenHash) ||
     new Date(verifyRow.expiresAt) < new Date()
   ) {
     throw AppError.badRequest(

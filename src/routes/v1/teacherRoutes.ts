@@ -6,7 +6,7 @@ import { listStudents, updateRequestAccessStatus } from '../../controllers/teach
 
 const router = Router()
 
-// Every admin endpoint requires an authenticated session AND the admin role.
+// Every teacher endpoint requires an authenticated session AND the teacher role.
 router.use(authenticate, requireRole('teacher'))
 
 router.get('/students', validate(listStudentsSchema), listStudents)

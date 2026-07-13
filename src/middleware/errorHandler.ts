@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express'
-import env from '../../env.ts'
+import type { NextFunction, Request, Response } from 'express'
+import env, { isProd } from '../../env.ts'
 import { AppError } from '../utils/AppError.ts'
 
 export interface CustomError extends Error {
@@ -10,11 +10,17 @@ export interface CustomError extends Error {
 
 export const errorHandler = (
     err: CustomError,
-    req: Request,
+    _req: Request,
     res: Response,
-    next: NextFunction
+    // Express requires the error handler to be registered with arity 4 to be
+    // recognized as such; the final `next` param is intentionally unused.
+    _next: unknown
 ) => {
-    console.error(err.stack)
+    // Stack traces are noisy in production and may leak internals; only log
+    // them in non-production stages.
+    if (!isProd()) {
+        console.error(err.stack)
+    }
 
     // Default error
     let status = err.status || 500

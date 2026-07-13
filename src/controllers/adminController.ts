@@ -2,7 +2,7 @@ import type { Response } from 'express'
 import { eq, isNull, sql, desc, and, ne } from 'drizzle-orm'
 import { db } from '../db/connection.ts'
 import { teachers, students, studentDevices } from '../db/schema.ts'
-import { hashPassword } from '../utils/passowrd.ts'
+import { hashPassword } from '../utils/password.ts'
 import { AppError } from '../utils/AppError.ts'
 import type { AuthenticatedRequest } from '../types/authTypes.ts'
 
