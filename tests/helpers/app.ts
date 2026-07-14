@@ -16,6 +16,10 @@ const AUTH_TABLES = [
   'lecture_content_items',
   'videos',
   'files',
+  // Quiz dependents (before quizzes)
+  'quiz_answers',
+  'quiz_questions',
+  'quiz_attempts',
   'quizzes',
   'lectures',
   // Identity & access

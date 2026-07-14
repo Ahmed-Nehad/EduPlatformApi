@@ -4,6 +4,7 @@ import adminRoutes from './v1/adminRoutes.ts'
 import teacherRoutes from './v1/teacherRoutes.ts'
 import studentRoutes from './v1/studentRoutes.ts'
 import lectureRoutes from './v1/lectureRoutes.ts'
+import quizRoutes from './v1/quizRoutes.ts'
 
 /**
  * Central route registry.
@@ -20,6 +21,7 @@ v1.use('/admin', adminRoutes)
 v1.use('/teacher', teacherRoutes)
 v1.use('/student', studentRoutes)
 v1.use('/lectures', lectureRoutes)
+v1.use('/quizzes', quizRoutes)
 
 router.use('/v1', v1)
 

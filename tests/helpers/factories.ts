@@ -8,6 +8,7 @@ import {
   videos,
   files,
   quizzes,
+  quizQuestions,
   lectureContentItems,
 } from '../../src/db/schema.ts'
 import { hashPassword } from '../../src/utils/password.ts'
@@ -256,6 +257,88 @@ export async function createContentItem(args: {
       contentType: args.contentType,
       contentId: args.contentId,
       position: args.position,
+    })
+    .returning()
+  return row
+}
+
+// ---------------------------------------------------------------------------
+// Quiz question factories
+// ---------------------------------------------------------------------------
+
+/** Creates an MCQ question attached to a quiz. */
+export async function createQuestion(
+  quizId: string,
+  overrides: Partial<{
+    questionText: string
+    options: Record<string, string>
+    correctOptionLabel: 'A' | 'B' | 'C' | 'D'
+    points: number
+    imageR2Key: string | null
+    position: number
+  }> = {}
+) {
+  const [row] = await db
+    .insert(quizQuestions)
+    .values({
+      quizId,
+      questionText: overrides.questionText ?? 'What is 2+2?',
+      questionType: 'mcq',
+      options: overrides.options ?? { A: '3', B: '4', C: '5', D: '6' },
+      correctOptionLabel: overrides.correctOptionLabel ?? 'B',
+      points: (overrides.points ?? 1).toString(),
+      imageR2Key: overrides.imageR2Key ?? null,
+      position: overrides.position ?? 1,
+    })
+    .returning()
+  return row
+}
+
+/** Creates a true/false question attached to a quiz. */
+export async function createTrueFalseQuestion(
+  quizId: string,
+  overrides: Partial<{
+    questionText: string
+    correctOptionLabel: 'A' | 'B'
+    points: number
+    imageR2Key: string | null
+    position: number
+  }> = {}
+) {
+  const [row] = await db
+    .insert(quizQuestions)
+    .values({
+      quizId,
+      questionText: overrides.questionText ?? 'The sky is blue.',
+      questionType: 'true_false',
+      correctOptionLabel: overrides.correctOptionLabel ?? 'A',
+      points: (overrides.points ?? 1).toString(),
+      imageR2Key: overrides.imageR2Key ?? null,
+      position: overrides.position ?? 1,
+    })
+    .returning()
+  return row
+}
+
+/** Creates a written (essay) question attached to a quiz. */
+export async function createWrittenQuestion(
+  quizId: string,
+  overrides: Partial<{
+    questionText: string
+    points: number
+    imageR2Key: string | null
+    position: number
+  }> = {}
+) {
+  const [row] = await db
+    .insert(quizQuestions)
+    .values({
+      quizId,
+      questionText: overrides.questionText ?? 'Explain your answer.',
+      questionType: 'written',
+      points: (overrides.points ?? 2).toString(),
+      imageR2Key: overrides.imageR2Key ?? null,
+      position: overrides.position ?? 1,
     })
     .returning()
   return row
