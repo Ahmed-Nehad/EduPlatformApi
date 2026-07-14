@@ -471,24 +471,3 @@ export const resendVerification = async (
     },
   })
 }
-
-/** GET /auth/devices — list my 2 bound devices (student only) */
-export const listDevices = async (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user!.id
-
-  const devices = await db
-    .select({
-      id: studentDevices.id,
-      device_fingerprint: studentDevices.deviceFingerprint,
-      device_label: studentDevices.deviceLabel,
-      slot_number: studentDevices.slotNumber,
-      bound_at: studentDevices.boundAt,
-      last_seen_at: studentDevices.lastSeenAt,
-      revoked_at: studentDevices.revokedAt,
-    })
-    .from(studentDevices)
-    .where(eq(studentDevices.studentId, userId))
-    .orderBy(studentDevices.slotNumber)
-
-  res.status(200).json({ success: true, data: { devices } })
-}

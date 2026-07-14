@@ -13,6 +13,7 @@ import { fingerprint } from './factories.ts'
  */
 const AUTH_TABLES = [
   'student_devices',
+  'teacher_access_requests',
   'password_reset_tokens',
   'email_verification_tokens',
   'students',

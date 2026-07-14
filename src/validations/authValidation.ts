@@ -73,12 +73,3 @@ export const resendVerificationSchema = z.object({
     email: emailField,
   }),
 })
-
-// ---------------------------------------------------------------------------
-// DELETE /auth/devices/:id  (params)
-// ---------------------------------------------------------------------------
-export const deviceIdParamSchema = z.object({
-  params: z.object({
-    id: z.uuid('Invalid device id'),
-  }),
-})
