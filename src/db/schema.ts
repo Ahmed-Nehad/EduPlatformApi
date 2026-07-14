@@ -370,6 +370,7 @@ export const videos = pgTable(
       .references(() => lectures.id, { onDelete: 'cascade' }),
     vdocipherVideoId: varchar('vdocipher_video_id', { length: 120 }).notNull(),
     title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
     durationSeconds: integer('duration_seconds'),
     sizeBytes: bigint('size_bytes', { mode: 'number' }),
     status: videoStatusEnum('status').default('processing').notNull(),
@@ -395,6 +396,7 @@ export const files = pgTable(
       .references(() => lectures.id, { onDelete: 'cascade' }),
     r2ObjectKey: text('r2_object_key').notNull(),
     title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
     sizeBytes: bigint('size_bytes', { mode: 'number' }),
     uploadedAt: timestamp('uploaded_at', { withTimezone: true })
       .defaultNow()
@@ -498,6 +500,7 @@ export const quizzes = pgTable(
       .notNull()
       .references(() => lectures.id, { onDelete: 'cascade' }),
     title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
     lockMode: quizLockModeEnum('lock_mode')
       .default('after_submission')
       .notNull(),

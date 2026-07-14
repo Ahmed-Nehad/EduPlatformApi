@@ -12,6 +12,13 @@ import { fingerprint } from './factories.ts'
  * We TRUNCATE ... CASCADE to reset sequences + FK-linked rows.
  */
 const AUTH_TABLES = [
+  // Content ordering + lectures (dependents first)
+  'lecture_content_items',
+  'videos',
+  'files',
+  'quizzes',
+  'lectures',
+  // Identity & access
   'student_devices',
   'teacher_access_requests',
   'password_reset_tokens',
