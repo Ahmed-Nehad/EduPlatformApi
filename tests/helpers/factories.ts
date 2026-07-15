@@ -10,6 +10,10 @@ import {
   quizzes,
   quizQuestions,
   lectureContentItems,
+  walletTransactions,
+  redemptionCodes,
+  codeRedemptions,
+  lecturePurchases,
 } from '../../src/db/schema.ts'
 import { hashPassword } from '../../src/utils/password.ts'
 
@@ -339,6 +343,98 @@ export async function createWrittenQuestion(
       points: (overrides.points ?? 2).toString(),
       imageR2Key: overrides.imageR2Key ?? null,
       position: overrides.position ?? 1,
+    })
+    .returning()
+  return row
+}
+
+// ---------------------------------------------------------------------------
+// Wallet, codes & purchase factories
+// ---------------------------------------------------------------------------
+
+/** Creates a redemption code issued by a teacher. */
+export async function createRedemptionCode(
+  teacherId: string,
+  overrides: Partial<{
+    code: string
+    creditAmount: number
+    isActive: boolean
+    expiresAt: Date | null
+    deletedAt: Date | null
+  }> = {}
+) {
+  const [row] = await db
+    .insert(redemptionCodes)
+    .values({
+      teacherId,
+      code: overrides.code ?? `CODE_${Date.now()}_${counter++}`,
+      creditAmount: (overrides.creditAmount ?? 100).toString(),
+      isActive: overrides.isActive ?? true,
+      ...(overrides.expiresAt !== undefined ? { expiresAt: overrides.expiresAt } : {}),
+      ...(overrides.deletedAt !== undefined ? { deletedAt: overrides.deletedAt } : {}),
+    })
+    .returning()
+  return row
+}
+
+/** Creates a wallet transaction ledger row. */
+export async function createWalletTransaction(
+  studentId: string,
+  teacherId: string,
+  overrides: Partial<{
+    type: 'credit_code' | 'credit_payment' | 'debit_purchase' | 'refund' | 'adjustment'
+    amount: number
+    balanceAfter: number
+    referenceTable: string
+    referenceId: string
+    description: string
+  }> = {}
+) {
+  const [row] = await db
+    .insert(walletTransactions)
+    .values({
+      studentId,
+      teacherId,
+      type: overrides.type ?? 'credit_code',
+      amount: (overrides.amount ?? 100).toString(),
+      balanceAfter: (overrides.balanceAfter ?? 100).toString(),
+      referenceTable: overrides.referenceTable ?? null,
+      referenceId: overrides.referenceId ?? null,
+      description: overrides.description ?? null,
+    })
+    .returning()
+  return row
+}
+
+/** Creates a code redemption record. */
+export async function createCodeRedemption(args: {
+  codeId: string
+  studentId: string
+  walletTransactionId: string
+}) {
+  const [row] = await db
+    .insert(codeRedemptions)
+    .values({
+      codeId: args.codeId,
+      studentId: args.studentId,
+      walletTransactionId: args.walletTransactionId,
+    })
+    .returning()
+  return row
+}
+
+/** Creates a lecture purchase record. */
+export async function createLecturePurchase(args: {
+  studentId: string
+  lectureId: string
+  walletTransactionId: string
+}) {
+  const [row] = await db
+    .insert(lecturePurchases)
+    .values({
+      studentId: args.studentId,
+      lectureId: args.lectureId,
+      walletTransactionId: args.walletTransactionId,
     })
     .returning()
   return row

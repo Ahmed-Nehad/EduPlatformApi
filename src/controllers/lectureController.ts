@@ -203,3 +203,117 @@ export const getLectureDetail = async (
     },
   })
 }
+
+// ---------------------------------------------------------------------------
+// GET /teachers — public teacher catalog
+// ---------------------------------------------------------------------------
+
+export const listTeachersCatalog = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { page, limit } = req.query as unknown as {
+    page: number
+    limit: number
+  }
+  const offset = offsetFor(page, limit)
+
+  const whereClause = eq(teachers.isActive, true)
+
+  const [rows, [{ count }]] = await Promise.all([
+    db
+      .select({
+        id: teachers.id,
+        name: teachers.name,
+        bio: teachers.bio,
+        avatarR2Key: teachers.avatarR2Key,
+        createdAt: teachers.createdAt,
+      })
+      .from(teachers)
+      .where(whereClause)
+      .orderBy(desc(teachers.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(teachers)
+      .where(whereClause),
+  ])
+
+  res.status(200).json({
+    success: true,
+    data: { teachers: rows },
+    meta: {
+      total: Number(count),
+      page,
+      limit,
+      totalPages: Math.ceil(Number(count) / limit),
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// GET /teachers/:id/lectures — published lectures for a teacher
+// ---------------------------------------------------------------------------
+
+export const listTeacherLectures = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const { id } = req.params
+  const { page, limit } = req.query as unknown as {
+    page: number
+    limit: number
+  }
+  const offset = offsetFor(page, limit)
+
+  // Verify teacher exists and is active
+  const [teacher] = await db
+    .select({ id: teachers.id })
+    .from(teachers)
+    .where(and(eq(teachers.id, id), eq(teachers.isActive, true)))
+    .limit(1)
+
+  if (!teacher) {
+    throw AppError.notFound('TEACHER_NOT_FOUND', 'Teacher not found')
+  }
+
+  const whereClause = and(
+    eq(lectures.teacherId, id),
+    eq(lectures.status, 'published'),
+    isNull(lectures.deletedAt)
+  )
+
+  const [rows, [{ count }]] = await Promise.all([
+    db
+      .select({
+        id: lectures.id,
+        title: lectures.title,
+        description: lectures.description,
+        price: lectures.price,
+        thumbnailR2Key: lectures.thumbnailR2Key,
+        createdAt: lectures.createdAt,
+        expiresAt: lectures.expiresAt,
+      })
+      .from(lectures)
+      .where(whereClause)
+      .orderBy(desc(lectures.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(lectures)
+      .where(whereClause),
+  ])
+
+  res.status(200).json({
+    success: true,
+    data: { lectures: rows },
+    meta: {
+      total: Number(count),
+      page,
+      limit,
+      totalPages: Math.ceil(Number(count) / limit),
+    },
+  })
+}

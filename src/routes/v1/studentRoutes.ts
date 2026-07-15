@@ -11,6 +11,14 @@ import {
   createAccessRequest,
   listMyTeachers,
 } from '../../controllers/studentController.ts'
+import {
+  purchaseLectureSchema,
+  listPurchasesSchema,
+} from '../../validations/purchaseValidation.ts'
+import {
+  purchaseLecture,
+  listPurchases,
+} from '../../controllers/purchaseController.ts'
 
 const router = Router()
 
@@ -22,6 +30,8 @@ router.use(authenticate, requireRole('student'))
 // GET    /student/devices                     — list my bound devices
 // GET    /student/my-teachers                 — teachers who approved me
 // POST   /student/access-requests/:teacherId  — request access to a teacher
+// POST   /student/lectures/:id/buy            — purchase a lecture
+// GET    /student/transactions                — list my transactions
 router.get('/devices', validate(listMyDevicesSchema), listMyDevices)
 router.get('/my-teachers', validate(listMyTeachersSchema), listMyTeachers)
 router.post(
@@ -29,5 +39,7 @@ router.post(
   validate(createAccessRequestSchema),
   createAccessRequest
 )
+router.post('/lectures/:id/buy', validate(purchaseLectureSchema), purchaseLecture)
+router.get('/transactions', validate(listPurchasesSchema), listPurchases)
 
 export default router

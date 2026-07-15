@@ -229,6 +229,9 @@ export const walletTransactions = pgTable(
     studentId: uuid('student_id')
       .notNull()
       .references(() => students.id),
+    teacherId: uuid('teacher_id')
+      .notNull()
+      .references(() => teachers.id),
     type: walletTxTypeEnum('type').notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     balanceAfter: numeric('balance_after', {
@@ -242,7 +245,9 @@ export const walletTransactions = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index('idx_wallet_tx_student').on(t.studentId, t.createdAt)]
+  (t) => [
+    index('idx_wallet_tx_student').on(t.studentId, t.teacherId, t.createdAt),
+  ]
 )
 
 // Strictly single-use: consumption enforced by UNIQUE(code_id) on code_redemptions.
@@ -639,6 +644,7 @@ export const teachersRelations = relations(teachers, ({ one, many }) => ({
   accessRequests: many(teacherAccessRequests),
   redemptionCodes: many(redemptionCodes),
   lectures: many(lectures),
+  walletTransactions: many(walletTransactions),
   gradedAnswers: many(quizAnswers),
 }))
 
@@ -703,6 +709,10 @@ export const walletTransactionsRelations = relations(
     student: one(students, {
       fields: [walletTransactions.studentId],
       references: [students.id],
+    }),
+    teacher: one(teachers, {
+      fields: [walletTransactions.teacherId],
+      references: [teachers.id],
     }),
     codeRedemptions: many(codeRedemptions),
     payments: many(payments),

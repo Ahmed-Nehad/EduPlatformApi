@@ -5,6 +5,9 @@ import teacherRoutes from './v1/teacherRoutes.ts'
 import studentRoutes from './v1/studentRoutes.ts'
 import lectureRoutes from './v1/lectureRoutes.ts'
 import quizRoutes from './v1/quizRoutes.ts'
+import codeRoutes from './v1/codeRoutes.ts'
+import walletRoutes from './v1/walletRoutes.ts'
+import publicTeachersRoutes from './v1/publicTeachersRoutes.ts'
 
 /**
  * Central route registry.
@@ -21,7 +24,10 @@ v1.use('/admin', adminRoutes)
 v1.use('/teacher', teacherRoutes)
 v1.use('/student', studentRoutes)
 v1.use('/lectures', lectureRoutes)
+v1.use('/teachers', publicTeachersRoutes)
 v1.use('/quizzes', quizRoutes)
+v1.use('/codes', codeRoutes)
+v1.use('/wallet', walletRoutes)
 
 router.use('/v1', v1)
 

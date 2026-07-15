@@ -21,6 +21,12 @@ const AUTH_TABLES = [
   'quiz_questions',
   'quiz_attempts',
   'quizzes',
+  // Wallet / purchases (dependents before lectures + students)
+  'code_redemptions',
+  'lecture_purchases',
+  'wallet_transactions',
+  'redemption_codes',
+  'payments',
   'lectures',
   // Identity & access
   'student_devices',
