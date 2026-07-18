@@ -27,6 +27,8 @@ import {
   reorderContent,
   removeContentItem,
 } from '../../controllers/teacherContentController.ts'
+import { gradeAttemptSchema, listUngradedSchema } from '../../validations/quizAttemptValidation.ts'
+import { gradeAttempt, listUngradedAttempts } from '../../controllers/teacherGradingController.ts'
 
 const router = Router()
 
@@ -51,6 +53,13 @@ router.delete(
   '/lectures/:id/content/:itemId',
   validate(removeContentItemSchema),
   removeContentItem
+)
+
+router.get('/quiz-attempts', validate(listUngradedSchema), listUngradedAttempts)
+router.post(
+  '/quiz-attempts/:id/grade',
+  validate(gradeAttemptSchema),
+  gradeAttempt
 )
 
 export default router

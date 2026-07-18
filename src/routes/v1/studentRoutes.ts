@@ -19,6 +19,20 @@ import {
   purchaseLecture,
   listPurchases,
 } from '../../controllers/purchaseController.ts'
+import {
+  getStudentQuizSchema,
+  startAttemptSchema,
+  getAttemptSchema,
+  submitAttemptSchema,
+  getAttemptResultsSchema,
+} from '../../validations/quizAttemptValidation.ts'
+import {
+  getStudentQuiz,
+  startAttempt,
+  getAttempt,
+  submitAttempt,
+  getAttemptResults,
+} from '../../controllers/studentQuizController.ts'
 
 const router = Router()
 
@@ -41,5 +55,16 @@ router.post(
 )
 router.post('/lectures/:id/buy', validate(purchaseLectureSchema), purchaseLecture)
 router.get('/transactions', validate(listPurchasesSchema), listPurchases)
+
+// GET    /student/quizzes/:id                 — quiz landing page
+// POST   /student/quizzes/:id/attempts        — start attempt
+// GET    /student/quiz-attempts/:id           — in-progress view
+// POST   /student/quiz-attempts/:id/submit    — submit attempt
+// GET    /student/quiz-attempts/:id/results   — results view
+router.get('/quizzes/:id', validate(getStudentQuizSchema), getStudentQuiz)
+router.post('/quizzes/:id/attempts', validate(startAttemptSchema), startAttempt)
+router.get('/quiz-attempts/:id', validate(getAttemptSchema), getAttempt)
+router.post('/quiz-attempts/:id/submit', validate(submitAttemptSchema), submitAttempt)
+router.get('/quiz-attempts/:id/results', validate(getAttemptResultsSchema), getAttemptResults)
 
 export default router

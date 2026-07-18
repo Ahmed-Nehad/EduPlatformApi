@@ -9,6 +9,8 @@ import {
   files,
   quizzes,
   quizQuestions,
+  quizAttempts,
+  quizAnswers,
   lectureContentItems,
   walletTransactions,
   redemptionCodes,
@@ -343,6 +345,85 @@ export async function createWrittenQuestion(
       points: (overrides.points ?? 2).toString(),
       imageR2Key: overrides.imageR2Key ?? null,
       position: overrides.position ?? 1,
+    })
+    .returning()
+  return row
+}
+
+// ---------------------------------------------------------------------------
+// Quiz attempt & answer factories
+// ---------------------------------------------------------------------------
+
+/** Creates a quiz attempt row. */
+export async function createQuizAttempt(
+  quizId: string,
+  studentId: string,
+  overrides: Partial<{
+    attemptNumber: number
+    status: 'in_progress' | 'submitted' | 'graded'
+    startedAt: Date
+    submittedAt: Date | null
+    gradedAt: Date | null
+    score: number
+  }> = {}
+) {
+  const [row] = await db
+    .insert(quizAttempts)
+    .values({
+      quizId,
+      studentId,
+      attemptNumber: overrides.attemptNumber ?? 1,
+      status: overrides.status ?? 'in_progress',
+      startedAt: overrides.startedAt ?? new Date(),
+      ...(overrides.submittedAt !== undefined
+        ? { submittedAt: overrides.submittedAt }
+        : {}),
+      ...(overrides.gradedAt !== undefined
+        ? { gradedAt: overrides.gradedAt }
+        : {}),
+      ...(overrides.score !== undefined
+        ? { score: overrides.score.toString() }
+        : {}),
+    })
+    .returning()
+  return row
+}
+
+/** Creates a quiz answer row. */
+export async function createQuizAnswer(
+  attemptId: string,
+  questionId: string,
+  overrides: Partial<{
+    selectedLabel: string | null
+    writtenAnswerText: string | null
+    isCorrect: boolean | null
+    pointsAwarded: number | null
+    gradedByTeacherId: string | null
+    gradedAt: Date | null
+    teacherFeedback: string | null
+  }> = {}
+) {
+  const [row] = await db
+    .insert(quizAnswers)
+    .values({
+      attemptId,
+      questionId,
+      selectedLabel: overrides.selectedLabel ?? null,
+      writtenAnswerText: overrides.writtenAnswerText ?? null,
+      isCorrect: overrides.isCorrect ?? null,
+      pointsAwarded:
+        overrides.pointsAwarded !== undefined
+          ? overrides.pointsAwarded.toString()
+          : null,
+      ...(overrides.gradedByTeacherId !== undefined
+        ? { gradedByTeacherId: overrides.gradedByTeacherId }
+        : {}),
+      ...(overrides.gradedAt !== undefined
+        ? { gradedAt: overrides.gradedAt }
+        : {}),
+      ...(overrides.teacherFeedback !== undefined
+        ? { teacherFeedback: overrides.teacherFeedback }
+        : {}),
     })
     .returning()
   return row

@@ -349,3 +349,59 @@ export const deleteQuestion = async (
 
   res.status(200).json({ success: true, data: { question: deleted } })
 }
+
+// ---------------------------------------------------------------------------
+// PATCH /quizzes/:id/questions/reorder — reorder question positions
+// ---------------------------------------------------------------------------
+
+export const reorderQuestions = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
+  const teacherId = req.user!.id
+  const { id } = req.params
+  const { ordered_ids } = req.body
+
+  // 1. Ownership check.
+  await assertQuizOwnership(id, teacherId)
+
+  // 2. Load all existing question IDs for this quiz.
+  const existing = await db
+    .select({ id: quizQuestions.id })
+    .from(quizQuestions)
+    .where(eq(quizQuestions.quizId, id))
+
+  const existingIds = new Set(existing.map((q) => q.id))
+
+  // Verify ordered_ids contains exactly the set of existing question IDs.
+  if (
+    ordered_ids.length !== existingIds.size ||
+    !ordered_ids.every((qid: string) => existingIds.has(qid))
+  ) {
+    throw AppError.badRequest(
+      'INVALID_QUESTION_SET',
+      'ordered_ids must contain exactly the set of existing question IDs'
+    )
+  }
+
+  // 3. 2-phase position update to avoid UNIQUE conflicts.
+  await db.transaction(async (tx) => {
+    // Phase A: set all positions to negative temp values.
+    for (let i = 0; i < ordered_ids.length; i++) {
+      await tx
+        .update(quizQuestions)
+        .set({ position: -(i + 1) })
+        .where(eq(quizQuestions.id, ordered_ids[i]))
+    }
+
+    // Phase B: set final positions.
+    for (let i = 0; i < ordered_ids.length; i++) {
+      await tx
+        .update(quizQuestions)
+        .set({ position: i + 1 })
+        .where(eq(quizQuestions.id, ordered_ids[i]))
+    }
+  })
+
+  res.status(200).json({ success: true })
+}

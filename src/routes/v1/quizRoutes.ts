@@ -8,6 +8,7 @@ import {
   addQuestionSchema,
   editQuestionSchema,
   deleteQuestionSchema,
+  reorderQuestionsSchema,
 } from '../../validations/quizValidation.ts'
 import {
   createQuiz,
@@ -16,6 +17,7 @@ import {
   addQuestion,
   editQuestion,
   deleteQuestion,
+  reorderQuestions,
 } from '../../controllers/quizController.ts'
 
 const router = Router()
@@ -32,6 +34,11 @@ teacher.get('/:id', validate(getQuizSchema), getQuiz)
 teacher.patch('/:id', validate(updateQuizSchema), updateQuiz)
 teacher.post('/:id/questions', validate(addQuestionSchema), addQuestion)
 teacher.patch(
+  '/:id/questions/reorder',
+  validate(reorderQuestionsSchema),
+  reorderQuestions
+)
+teacher.patch(
   '/:id/questions/:qid',
   validate(editQuestionSchema),
   editQuestion
@@ -43,7 +50,5 @@ teacher.delete(
 )
 
 router.use(teacher)
-
-// (Future: student sub-router for attempts — Phase E)
 
 export default router

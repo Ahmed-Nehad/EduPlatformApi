@@ -183,3 +183,14 @@ export const editQuestionSchema = z.object({
 export const deleteQuestionSchema = z.object({
   params: questionIdParam,
 })
+
+// ---------------------------------------------------------------------------
+// PATCH /quizzes/:id/questions/reorder — reorder questions
+// ---------------------------------------------------------------------------
+
+export const reorderQuestionsSchema = z.object({
+  params: quizIdParam,
+  body: z.object({
+    ordered_ids: z.array(z.uuid('Invalid question id')).min(1),
+  }),
+})
